@@ -22,7 +22,7 @@ class Tetris:
 			"\na : move left"
 			"\ns : do nothing"
 			"\nd : move right"
-			"\nr : rotate clockwise"
+			"\nr : rotate clockwise -- not implemented yet"
 			"\nMemorize above then type 'standy' to play. "))
 		if input().strip() == "standy":
 			self._game_loop()
@@ -32,34 +32,38 @@ class Tetris:
 			Game loop.
 		"""
 		system("clear")
-		current_block = Block()
-		self._draw_block(current_block)
+		self.current_block = Block()
+		self.current_block.set_letter(self.current_letter)
+		self._draw_block(self.current_block)
 		self.display_board()
 		while True:
 			cmd = None
 			while(cmd not in LEGAL_INPUTS):
 				print("\nEnter command: ", end="")
 				cmd = input().strip()
+			old_location = tuple((tuple(x) for x in self.current_block.get_locations()))
 			if cmd == 'a':
-				self._erase_block(current_block)
-				current_block.left()
+				self._erase_block(self.current_block)
+				self.current_block.left()
 			elif cmd == 'd':
-				self._erase_block(current_block)
-				current_block.right()
+				self._erase_block(self.current_block)
+				self.current_block.right()
 			elif cmd == 's':
-				self._erase_block(current_block)
-				current_block.nothing()
+				self._erase_block(self.current_block)
+				self.current_block.nothing()
 			elif cmd == 'r':
-				self._erase_block(current_block)
-				current_block.rotate()
-			if self._check_collision(current_block):
-				self._draw_block(current_block)
-				current_block = Block()
+				self._erase_block(self.current_block)
+				self.current_block.rotate()
+			if self._check_collision(self.current_block):
+				self.current_block.set_locations([list(x) for x in list(old_location)])
+				self._draw_block(self.current_block)
+				self.current_block = Block()
 				self._next_letter()
-				if self._check_collision(current_block):
+				self.current_block.set_letter(self.current_letter)
+				if self._check_collision(self.current_block):
 					print("Game over!")
 					exit(0)
-			self._draw_block(current_block)
+			self._draw_block(self.current_block)
 			self.display_board()
 			self.round += 1
 
@@ -109,7 +113,7 @@ class Tetris:
 		print("Round:", str(self.round))
 		for i in range(COLUMNS+1):
 			print(str(i) + " ", end="")
-		for i in range(ROWS):
+		for i in range(ROWS-1):
 			print("\n" + str(i+1), end="")
 			for j in range(COLUMNS):
 				print(" " + str(self.matrix[i][j]), end="")
@@ -123,18 +127,18 @@ class Tetris:
 
 
 class Block:
-	PIECES = [ [[0, 0], [1, 0], [2, 0], [3, 0]], 
-				[[0, 0], [1, 0], [2, 0], [2, 1]], 
-				[[0, 1], [1, 1], [2, 0], [2, 1]], 
-				[[0, 0], [0, 1], [1, 0], [1, 1]] ]
+	PIECES = ( ((0, 0), (1, 0), (2, 0), (3, 0)), 
+				((0, 0), (1, 0), (2, 0), (2, 1)), 
+				((0, 1), (1, 1), (2, 0), (2, 1)), 
+				((0, 0), (0, 1), (1, 0), (1, 1)) )
 	def __init__(self):
-		self.locations = self.PIECES[randint(0, 3)]
+		self.locations = [list(x) for x in list(self.PIECES[randint(0, 3)])]
 
 	def get_locations(self):
 		return self.locations
 
 	def set_locations(self, new_locations):
-		self.locations = new_location
+		self.locations = new_locations
 
 	def nothing(self):
 		for location in self.locations:
@@ -157,7 +161,10 @@ class Block:
 			location[1] = location[1] + 1
 		self.nothing()
 	def rotate(self):
+
 		self.nothing()
+	def set_letter(self, letter):
+		self.letter = letter
 
 
 if __name__ == '__main__':
